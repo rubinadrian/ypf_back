@@ -1,0 +1,291 @@
+Index: app/Http/Controllers/CioController.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?php\r\n\r\nnamespace App\\Http\\Controllers;\r\n\r\nclass CioController extends Controller {\r\n\r\n\tfunction __construct() {\r\n\t\tself::login();\r\n\t}\r\n\r\n\tpublic function getCierre($period) {\r\n\r\n\t\t$postdata = http_build_query(\r\n\t\t\tarray(\r\n\t\t\t\t'reportId' => 'reportSales',\r\n\t\t\t\t'filterType' => 'T',\r\n\t\t\t\t'period' => $period,\r\n\t\t\t)\r\n\t\t);\r\n\r\n\t\t$url = \"http://10.7.3.53/console/reportSales/\";\r\n\t\t$page = self::get_web_page($url, $postdata);\r\n\r\n\t\treturn $page;\r\n\t}\r\n\r\n\tpublic function getYPFenRuta($period) {\r\n\r\n\t\t$postdata = http_build_query(\r\n\t\t\tarray(\r\n\t\t\t\t'idReporte' => 'reportDispatchs',\r\n\t\t\t\t'filterType' => 'T',\r\n\t\t\t\t'period' => $period,\r\n\t\t\t\t'paymentTypes[]' => 48\r\n\t\t\t)\r\n\t\t);\r\n\r\n\t\t$url = \"http://10.7.3.53/console/reportDispatchs\";\r\n\t\t$page = self::get_web_page($url, $postdata);\r\n\r\n\t\treturn $page;\r\n\t}\r\n\r\n\t/**\r\n\t * @month  Int [0-11];\r\n\t * $year long year\r\n\t */\r\n\tpublic function getPeriodos($month = 9, $year = 2019) {\r\n\t\t$url = \"http://10.7.3.53/console/reportSales/reloadPeriod/T/\" . $month . \"/\" . $year . \"/\";\r\n\t\t$result = self::get_web_page($url, [], ['Content-type: application/json']);\r\n\t\treturn $result;\r\n\t}\r\n\r\n\tprivate static function login() {\r\n\t\t$postdata = http_build_query(\r\n\t\t\tarray(\r\n\t\t\t\t'id_usuario' => '27294608',\r\n\t\t\t\t'clave' => 'P4bl0mar',\r\n\t\t\t)\r\n\t\t);\r\n\r\n\t\t$url = \"http://10.7.3.53/console/login/login/\";\r\n\t\t$result = self::get_web_page($url, $postdata);\r\n\t\treturn $result;\r\n\t}\r\n\r\n\tprivate static function tableDomtoDataArray($table) {\r\n\t\t$tableDom = new DomDocument();\r\n\t\t$tableDom->appendChild($tableDom->importNode($table, true));\r\n\r\n\t\t$obj = [];\r\n\t\t$jsonObj = [];\r\n\t\t$th = $tableDom->getElementsByTagName('th');\r\n\t\t$td = $tableDom->getElementsByTagName('td');\r\n\t\t$thNum = $th->length;\r\n\t\t$arrLength = $td->length;\r\n\t\t$rowIx = 0;\r\n\r\n\t\tfor ($i = 0; $i < $arrLength; $i++) {\r\n\t\t\t$head = trim($th[$i % $thNum]->textContent);\r\n\t\t\t$content = trim($td[$i]->textContent);\r\n\t\t\t$obj[$head] = $content;\r\n\t\t\tif (($i + 1) % $thNum === 0) {\r\n\t\t\t\t$jsonObj[++$rowIx] = $obj;\r\n\t\t\t\t$obj = [];\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn $jsonObj;\r\n\t}\r\n\r\n\t/**\r\n\t * Get a web file (HTML, XHTML, XML, image, etc.) from a URL.  Return an\r\n\t * array containing the HTTP server response header fields and content.\r\n\t */\r\n\tprivate static function get_web_page($url, $postdata, $headers = ['Content-Type: application/x-www-form-urlencoded']) {\r\n\t\t$user_agent = 'Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';\r\n\r\n\t\t$options = array(\r\n\r\n\t\t\tCURLOPT_CUSTOMREQUEST => \"POST\", //set request type post or get\r\n\t\t\tCURLOPT_POST => 1,\r\n\t\t\tCURLOPT_USERAGENT => $user_agent, //set user agent\r\n\t\t\tCURLOPT_COOKIEFILE => \"cookie.txt\", //set cookie file\r\n\t\t\tCURLOPT_COOKIEJAR => \"cookie.txt\", //set cookie jar\r\n\t\t\tCURLOPT_RETURNTRANSFER => true, // return web page\r\n\t\t\tCURLOPT_HEADER => false, // don't return headers\r\n\t\t\tCURLOPT_FOLLOWLOCATION => true, // follow redirects\r\n\t\t\tCURLOPT_ENCODING => \"\", // handle all encodings\r\n\t\t\tCURLOPT_AUTOREFERER => true, // set referer on redirect\r\n\t\t\tCURLOPT_CONNECTTIMEOUT => 120, // timeout on connect\r\n\t\t\tCURLOPT_TIMEOUT => 120, // timeout on response\r\n\t\t\tCURLOPT_MAXREDIRS => 10, // stop after 10 redirects\r\n\t\t\tCURLOPT_POSTFIELDS => $postdata,\r\n\t\t\tCURLOPT_HTTPHEADER => $headers,\r\n\t\t);\r\n\r\n\t\t$ch = curl_init($url);\r\n\t\tcurl_setopt_array($ch, $options);\r\n\t\t$content = curl_exec($ch);\r\n\t\t$err = curl_errno($ch);\r\n\t\t$errmsg = curl_error($ch);\r\n\t\t$header = curl_getinfo($ch);\r\n\t\tcurl_close($ch);\r\n\r\n\t\t$header['errno'] = $err;\r\n\t\t$header['errmsg'] = $errmsg;\r\n\t\t$header['content'] = $content;\r\n\r\n\t\t/** Error en la comunicacion */\r\n\t\tif ($header['errno'] != 0) {exit(json_encode(['error' => 1]));}\r\n\t\tif ($header['http_code'] != 200) {exit(json_encode(['error' => 1]));}\r\n\r\n\t\treturn $content;\r\n\t}\r\n\r\n\r\n\r\n\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/Http/Controllers/CioController.php	(revision a45386754735e8996cad310318edb65609c80f65)
++++ app/Http/Controllers/CioController.php	(date 1596570640969)
+@@ -2,6 +2,7 @@
+ 
+ namespace App\Http\Controllers;
+ 
++
+ class CioController extends Controller {
+ 
+ 	function __construct() {
+@@ -52,12 +53,15 @@
+ 	}
+ 
+ 	private static function login() {
++        $usuario = \Config::get('values.cio_user');
++        $pass = \Config::get('values.cio_password');
++
+ 		$postdata = http_build_query(
+ 			array(
+-				'id_usuario' => '27294608',
+-				'clave' => 'P4bl0mar',
++				'id_usuario' => $usuario,
++				'clave' => $pass,
+ 			)
+-		);
++        );
+ 
+ 		$url = "http://10.7.3.53/console/login/login/";
+ 		$result = self::get_web_page($url, $postdata);
+Index: app/Http/Controllers/CierreController.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?php\r\n\r\nnamespace App\\Http\\Controllers;\r\n\r\nuse App\\Cierre;\r\nuse App\\Facturado;\r\nuse App\\Incidencia;\r\nuse App\\Aforador;\r\nuse App\\Arqueo;\r\nuse App\\Cio;\r\nuse App\\ControlAforadores;\r\nuse App\\ControlArticulos;\r\nuse App\\CierreCio;\r\nuse App\\Ypfenruta;\r\nuse Illuminate\\Http\\Request;\r\nuse App\\Mail\\CierreMail;\r\nuse Mail;\r\nuse App\\Traits\\Fechas;\r\nuse Log;\r\n\r\nclass CierreController extends Controller\r\n{\r\n    use Fechas;\r\n\r\n    public function index()\r\n    {\r\n        return Cierre::orderBy('period', 'Desc')->limit(100)->get();\r\n    }\r\n\r\n    public function show($period)\r\n    {\r\n        $cierre = Cierre::where('period', $period)->first();\r\n        return ['ok'=>'true', 'cierre' => $cierre];\r\n    }\r\n\r\n    public function close($period)\r\n    {\r\n        // Me queda controlar que este todo facturado desde el servidor.\r\n        $cierre = Cierre::where('period', $period)->first();\r\n        if(!$cierre) return ['ok' => false, 'msg' => 'No existe el cierre'];\r\n        $cierre_id = $cierre->id;\r\n        $data =  $this->toPeriodFechasHoras($cierre->period);\r\n        $data = array_merge($data, ['usuario' => strtoupper($cierre->usuario), \r\n                                    'cancelacion_desde' => 2,\r\n                                    'cancelacion_hasta' => 3]);\r\n\r\n        $comprobantes = Facturado::getComprobantesCaja($data);\r\n        $facturado =  Facturado::getFacturados($data);\r\n        $arqueo = Arqueo::select('v1000','v500','v200','v100','v50','v20','v10','v5','v2','v1',\r\n                        'cheques','otros_texto','otros_valor','tarjetas','tickets')\r\n                        ->where('cierre_id', $cierre->id)->first();\r\n        $aforadores = ControlAforadores::where('cierre_id', $cierre_id)\r\n                ->select('aforador_id',\r\n                    'articulo',\r\n                    'nombre',\r\n                    'orden',\r\n                    'cierre_id',\r\n                    'control_aforadores.inicial',\r\n                    'final')\r\n                ->join('aforadores', 'aforadores.id', '=', 'aforador_id')\r\n                ->get() ?? [];\r\n        $control = ControlArticulos::where('cierre_id', $cierre_id)\r\n                        ->select(   'control_articulos.articulo_id',\r\n                                    'control_articulos.cierre_id',\r\n                                    'articulos.codigo',\r\n                                    'articulos.denominacion',\r\n                                    'control_articulos.final',\r\n                                    'control_articulos.yer',\r\n                                    'control_articulos.id',\r\n                                    'control_articulos.inicial',\r\n                                    'articulos.orden',\r\n                                    'control_articulos.reposicion')\r\n                        ->join('articulos', 'articulos.id', '=', 'articulo_id')\r\n                        ->get() ?? [];\r\n        $incidencias = Incidencia::where('cierre_id', $cierre->id)->get() ?? [];\r\n        $yer = Ypfenruta::where('period', $period)->first();\r\n        $cierre_cio = CierreCio::where('period', $period)->first();\r\n\r\n        $contado = 0;\r\n        $ctacte = 0;\r\n        $tarjeta = 0;\r\n        foreach($comprobantes as $c) {\r\n            if($this->isContado($c)) {\r\n                $contado += ($c->totalcom + ($c->totalcom  - $c->imptarj ) * ($c->tarjcred ==0?0:1)) * ($c->debcre ==2?-1:1);\r\n            } else if($this->isCtacte($c)) {\r\n                $ctacte += $c->totalcom  * ($c->debcre==2?-1:1) + ($c->totalcom  - $c->imptarj ) * ($c->tarjcred ==0?0:1);\r\n            } else if($this->isTarjeta($c)) {\r\n                $tarjeta += $c->imptarj  * ($c->debcre ==2?-1:1);\r\n            }\r\n        }\r\n\r\n        $arqueo_contado = 0;\r\n        // Log::info($arqueo->attributesToArray());\r\n        foreach($arqueo->attributesToArray() as $k=>$v){\r\n            if(strtoupper($k) == 'TARJETAS') continue;\r\n\r\n            // los campos contado son v1000,v500, etc. \r\n            // quitamos con substr la v\r\n            if(is_numeric(substr($k,1))) {\r\n                $arqueo_contado += (substr($k,1) * $v);\r\n            } else {\r\n                if(is_numeric($v)) {\r\n                    $arqueo_contado += $v;\r\n                }\r\n            }\r\n        }\r\n        $arqueo_tarjeta =   $arqueo->tarjetas;\r\n\r\n        $all_data = [\r\n            'cierre'         => $cierre,\r\n            'fechas'         => $data,\r\n            'comprobantes'   => $comprobantes,\r\n            'facturado'      => $facturado,\r\n            'arqueo'         => $arqueo,\r\n            'aforadores'     => $aforadores,\r\n            'control'        => $control,\r\n            'incidencias'    => $incidencias,\r\n            'yer'            => $yer,\r\n            'cierre_cio'     => $cierre_cio,\r\n            'contado'        => $contado,\r\n            'ctacte'         => $ctacte,\r\n            'tarjeta'        => $tarjeta,\r\n            'arqueo_tarjeta' => $arqueo_tarjeta,\r\n            'arqueo_contado' => $arqueo_contado\r\n        ];\r\n\r\n        Mail::to('pmartorell@coopunion.com.ar')\r\n             ->cc(['fmargherit@coopunion.com.ar','vbaquel@coopunion.com.ar','enunez@coopunion.com.ar','ngigli@coopunion.com.ar'])\r\n            ->send(new CierreMail(['d' => $all_data]));\r\n        return $this->changeStatus($cierre_id, '1000');\r\n    }\r\n\r\n    // Cuando se controla modificaciones y no hay ningun comprobante se pasa a status 4\r\n    public function modificaciones(Request $request)\r\n    {\r\n        return $this->changeStatus($request->cierre_id, '4');\r\n    }\r\n\r\n    public function changeStatus($cierre_id, $status)\r\n    {\r\n        $cierre = Cierre::find($cierre_id);\r\n        if($cierre) {\r\n            $cierre->status = $status;\r\n            $cierre->save();\r\n            return ['ok'=>'true', 'cierre' => $cierre];\r\n        }\r\n\r\n        return ['ok'=>'false', 'msg' => 'No existe el cierre solicitado'];\r\n    }\r\n\r\n    public function store(Request $request)\r\n    {\r\n        $cierre = Cierre::where('period', $request->period)->first();\r\n\r\n        if(!$cierre) {\r\n            $cierre = new Cierre;\r\n            $cierre->status = 0;\r\n        }\r\n\r\n        if($cierre->status != 1000) {\r\n            $cierre->playero1 = $request->playero1;\r\n            $cierre->playero2 = $request->playero2;\r\n            $cierre->playero3 = $request->playero3;\r\n            $cierre->usuario = $request->turno;\r\n            $cierre->period = $request->period;\r\n            $cierre->save();\r\n        }\r\n\r\n        // Todo cierre tiene un arqueo si o si, porque la pantalla cheques lo exige\r\n        $arqueo = Arqueo::where('cierre_id', $cierre->id)->first();\r\n        if(!$arqueo) {\r\n            $data = [];\r\n            $data['cierre_id'] = $cierre->id;\r\n            $arqueo = Arqueo::create($data);\r\n        }\r\n        \r\n        \r\n        \r\n        return ['ok'=>'true', 'cierre' => $cierre];\r\n    }\r\n\r\n\r\n    public function remove($period) {\r\n        $cierre = Cierre::where('period', $period)->first();\r\n        $cierre->delete();\r\n\r\n        return ['ok'=>'true'];\r\n    }\r\n\r\n    public function setObs(Request $request) {\r\n        $cierre = Cierre::where('period', $request->period)->first();\r\n\r\n        if($cierre) {\r\n            $cierre->observaciones = $request->observaciones;\r\n            $cierre->save();\r\n\r\n            return ['ok'=>'true'];\r\n        }\r\n\r\n        return ['ok'=>'false'];\r\n    }\r\n\r\n    private function isContado($c) {\r\n        if($c->contadocc == 1 \r\n             && $c->tipomovim == 66\r\n             && (   $c->tarjcred == 0 ||\r\n                   ($c->tarjcred != 0 && ( abs($c->totalcom - $c->imptarj) > 1))\r\n                )\r\n             && $c->tipocomp != '802'\r\n             && $c->tipocomp != '803')\r\n            return true;\r\n        return false;                \r\n    }\r\n\r\n    private function isCtacte($c) {\r\n        if($c->contadocc == 2\r\n             && $c->tipomovim == 66\r\n             && (   $c->tarjcred == 0 ||\r\n                   ($c->tarjcred != 0 && ( abs($c->totalcom - $c->imptarj) > 1))\r\n                )\r\n             && $c->tipocomp != '802'\r\n             && $c->tipocomp != '803')\r\n            return true;\r\n        return false;                \r\n    }\r\n\r\n    public function isTarjeta($c) {\r\n        if($c->tarjcred != 0)\r\n            return true;\r\n        return false;\r\n    }\r\n\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/Http/Controllers/CierreController.php	(revision a45386754735e8996cad310318edb65609c80f65)
++++ app/Http/Controllers/CierreController.php	(date 1596663877813)
+@@ -12,6 +12,8 @@
+ use App\ControlArticulos;
+ use App\CierreCio;
+ use App\Ypfenruta;
++use App\Cheque;
++use App\Promo;
+ use Illuminate\Http\Request;
+ use App\Mail\CierreMail;
+ use Mail;
+@@ -40,7 +42,7 @@
+         if(!$cierre) return ['ok' => false, 'msg' => 'No existe el cierre'];
+         $cierre_id = $cierre->id;
+         $data =  $this->toPeriodFechasHoras($cierre->period);
+-        $data = array_merge($data, ['usuario' => strtoupper($cierre->usuario), 
++        $data = array_merge($data, ['usuario' => strtoupper($cierre->usuario),
+                                     'cancelacion_desde' => 2,
+                                     'cancelacion_hasta' => 3]);
+ 
+@@ -94,7 +96,7 @@
+         foreach($arqueo->attributesToArray() as $k=>$v){
+             if(strtoupper($k) == 'TARJETAS') continue;
+ 
+-            // los campos contado son v1000,v500, etc. 
++            // los campos contado son v1000,v500, etc.
+             // quitamos con substr la v
+             if(is_numeric(substr($k,1))) {
+                 $arqueo_contado += (substr($k,1) * $v);
+@@ -152,9 +154,11 @@
+     {
+         $cierre = Cierre::where('period', $request->period)->first();
+ 
++        $es_nuevo = false;
+         if(!$cierre) {
+             $cierre = new Cierre;
+             $cierre->status = 0;
++            $es_nuevo = true;
+         }
+ 
+         if($cierre->status != 1000) {
+@@ -173,9 +177,14 @@
+             $data['cierre_id'] = $cierre->id;
+             $arqueo = Arqueo::create($data);
+         }
+-        
+-        
+-        
++
++        // Si es un nuevo cierre, pasar ticket y cheques con arqueo_id = 0 al nuevo arqueo
++        if($es_nuevo) {
++            Cheque::where('arqueo_id', 0)->update(['arqueo_id' => $arqueo->id]);
++             Promo::where('arqueo_id', 0)->update(['arqueo_id' => $arqueo->id]);
++        }
++
++
+         return ['ok'=>'true', 'cierre' => $cierre];
+     }
+ 
+@@ -201,7 +210,7 @@
+     }
+ 
+     private function isContado($c) {
+-        if($c->contadocc == 1 
++        if($c->contadocc == 1
+              && $c->tipomovim == 66
+              && (   $c->tarjcred == 0 ||
+                    ($c->tarjcred != 0 && ( abs($c->totalcom - $c->imptarj) > 1))
+@@ -209,7 +218,7 @@
+              && $c->tipocomp != '802'
+              && $c->tipocomp != '803')
+             return true;
+-        return false;                
++        return false;
+     }
+ 
+     private function isCtacte($c) {
+@@ -221,7 +230,7 @@
+              && $c->tipocomp != '802'
+              && $c->tipocomp != '803')
+             return true;
+-        return false;                
++        return false;
+     }
+ 
+     public function isTarjeta($c) {
+Index: app/Http/Controllers/ArqueoController.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?php\r\n\r\nnamespace App\\Http\\Controllers;\r\n\r\nuse App\\Arqueo;\r\nuse App\\Cierre;\r\nuse App\\Cheque;\r\nuse Illuminate\\Http\\Request;\r\n\r\nclass ArqueoController extends Controller\r\n{\r\n    /**\r\n     * Display a listing of the resource.\r\n     *\r\n     * @return \\Illuminate\\Http\\Response\r\n     */\r\n    public function index($cierre_id)\r\n    {\r\n        $arqueo = Arqueo::where('cierre_id', $cierre_id)->first();\r\n        $importe_cheques = $this->getImporteCheques($arqueo->id);\r\n        $data = $arqueo->toArray();\r\n        $data['cheques'] = $importe_cheques;\r\n        return $data;\r\n    }\r\n\r\n    /**\r\n     * Store a newly created resource in storage.\r\n     *\r\n     * @param  \\Illuminate\\Http\\Request  $request\r\n     * @return \\Illuminate\\Http\\Response\r\n     */\r\n    public function store(Request $request)\r\n    {\r\n        $cierre = Cierre::find($request->cierre_id);\r\n        if($cierre && $cierre->status == 0) {\r\n            $data = $request->all();\r\n            $data['cierre_id'] = $cierre->id;\r\n            $arqueo = Arqueo::where('cierre_id', $cierre->id)->first();\r\n            $data['cheques'] = $this->getImporteCheques($arqueo->id);\r\n            \r\n            $num1 = 1;\r\n\r\n            $arqueo->v5 = $data['5'];\r\n            $arqueo->v10 = $data['10'];\r\n            $arqueo->v20 = $data['20'];\r\n            $arqueo->v50 = $data['50'];\r\n            $arqueo->v100 = $data['100'];\r\n            $arqueo->v200 = $data['200'];\r\n            $arqueo->v500 = $data['500'];\r\n            $arqueo->v1000 = $data['1000'];\r\n            $arqueo->cheques = $data['cheques'];\r\n            $arqueo->otros_texto = $data['otros_texto'];\r\n            $arqueo->otros_valor = $data['otros_valor'];\r\n            $arqueo->tarjetas = $data['tarjetas'];\r\n            $arqueo->tickets = $data['tickets'];\r\n\r\n            $arqueo->save();\r\n\r\n\r\n            $cierre->status = 1;\r\n            $cierre->save();\r\n            return ['ok'=>'true', 'cierre'=>$cierre];\r\n        }\r\n        return ['ok'=>false];\r\n        \r\n    }\r\n\r\n    // public function saveImporteCheques(Request $request) {\r\n    //     $cierre = Cierre::find($request->cierre_id);\r\n    //     if($cierre && $cierre->status == 0) {\r\n    //         $arqueo = Arqueo::where('cierre_id', $cierre->id)->first();\r\n    //         if(!$arqueo) {\r\n    //             $arqueo = new Arqueo();\r\n    //         }\r\n    //         $arqueo->cierre_id = $cierre->id;\r\n    //         $arqueo->cheques = $request->cheques;\r\n    //         $arqueo->save();            \r\n    //         return ['ok'=>'true', 'arqueo' => $arqueo ];\r\n    //     }\r\n\r\n    //     return [ 'ok' => false ];\r\n    // }\r\n\r\n    public function getImporteCheques($arqueo_id) {\r\n        $total = 0;\r\n        $cheques = Cheque::where('arqueo_id', $arqueo_id)->get();\r\n        foreach($cheques as $c) {\r\n            $total += $c->importe;\r\n        }\r\n\r\n        return $total;\r\n    }\r\n\r\n \r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/Http/Controllers/ArqueoController.php	(revision a45386754735e8996cad310318edb65609c80f65)
++++ app/Http/Controllers/ArqueoController.php	(date 1596664182586)
+@@ -5,6 +5,7 @@
+ use App\Arqueo;
+ use App\Cierre;
+ use App\Cheque;
++use App\Promo;
+ use Illuminate\Http\Request;
+ 
+ class ArqueoController extends Controller
+@@ -18,8 +19,10 @@
+     {
+         $arqueo = Arqueo::where('cierre_id', $cierre_id)->first();
+         $importe_cheques = $this->getImporteCheques($arqueo->id);
++        $importe_promos = $this->getImportePromos($arqueo->id);
+         $data = $arqueo->toArray();
+         $data['cheques'] = $importe_cheques;
++        $data['promos'] = $importe_promos;
+         return $data;
+     }
+ 
+@@ -37,7 +40,8 @@
+             $data['cierre_id'] = $cierre->id;
+             $arqueo = Arqueo::where('cierre_id', $cierre->id)->first();
+             $data['cheques'] = $this->getImporteCheques($arqueo->id);
+-            
++            $data['promos'] = $this->getImportePromos($arqueo->id);
++
+             $num1 = 1;
+ 
+             $arqueo->v5 = $data['5'];
+@@ -49,6 +53,7 @@
+             $arqueo->v500 = $data['500'];
+             $arqueo->v1000 = $data['1000'];
+             $arqueo->cheques = $data['cheques'];
++            $arqueo->promos = $data['promos'];
+             $arqueo->otros_texto = $data['otros_texto'];
+             $arqueo->otros_valor = $data['otros_valor'];
+             $arqueo->tarjetas = $data['tarjetas'];
+@@ -62,7 +67,7 @@
+             return ['ok'=>'true', 'cierre'=>$cierre];
+         }
+         return ['ok'=>false];
+-        
++
+     }
+ 
+     // public function saveImporteCheques(Request $request) {
+@@ -74,7 +79,7 @@
+     //         }
+     //         $arqueo->cierre_id = $cierre->id;
+     //         $arqueo->cheques = $request->cheques;
+-    //         $arqueo->save();            
++    //         $arqueo->save();
+     //         return ['ok'=>'true', 'arqueo' => $arqueo ];
+     //     }
+ 
+@@ -84,12 +89,22 @@
+     public function getImporteCheques($arqueo_id) {
+         $total = 0;
+         $cheques = Cheque::where('arqueo_id', $arqueo_id)->get();
+-        foreach($cheques as $c) {
+-            $total += $c->importe;
++        foreach($cheques as $cheque) {
++            $total += $cheque->importe;
++        }
++
++        return $total;
++    }
++
++    public function getImportePromos($arqueo_id) {
++        $total = 0;
++        $promos = Promo::where('arqueo_id', $arqueo_id)->get();
++        foreach($promos as $promo) {
++            $total += $promo->importe;
+         }
+ 
+         return $total;
+     }
+ 
+- 
++
+ }
+Index: routes/api.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?php\r\n\r\nuse Illuminate\\Http\\Request;\r\n\r\nRoute::group([\r\n    'prefix' => 'auth',\r\n], function () {\r\n    Route::post('login', 'AuthController@login');\r\n    Route::post('logout', 'AuthController@logout');\r\n    Route::post('refresh', 'AuthController@refresh');\r\n    Route::post('me', 'AuthController@me');\r\n});\r\n\r\n// Route::get('caja', 'FacturadoController@getCaja');\r\nRoute::get('comprobantes/{cierre_id}', 'FacturadoController@getComprobantes');\r\nRoute::get('modificaciones/{cierre_id}', 'FacturadoController@getModificaciones');\r\nRoute::get('tarjetas', 'FacturadoController@getTarjetas');\r\nRoute::get('planilla', 'ArticuloController@getPdf');\r\n\r\nRoute::group(['middleware' => ['jwt']], function () {\r\n\tRoute::delete('cierre/{period}', 'CierreController@remove');\r\n\t\r\n    Route::post('articulo/orden','ArticuloController@saveOrden');\r\n    Route::post('articulo', 'ArticuloController@store');\r\n    Route::delete('articulo/{id}','ArticuloController@delete');\r\n\t\r\n    Route::post('aforador/orden','AforadorController@saveOrden');\r\n    Route::post('aforador', 'AforadorController@store');\r\n    Route::delete('aforador/{id}','AforadorController@delete');\r\n});\r\n\r\nRoute::get('aforador', 'AforadorController@index');\r\n\r\nRoute::get('playero', 'PlayeroController@index');\r\nRoute::get('usuarios', 'PlayeroController@usuariosCaja');\r\nRoute::get('articulo', 'ArticuloController@index');\r\n\r\nRoute::get('cio/periodos/{month}/{year}', 'CioController@getPeriodos');\r\nRoute::get('cio/cierre/{period}', 'CioController@getCierre');\r\nRoute::get('cio/ypfenruta/{period}', 'CioController@getYPFenRuta');\r\n\r\nRoute::get('articulo/combustibles', 'ArticuloController@getArtCombBit');\r\n\r\nRoute::get('cierre/close/{period}', 'CierreController@close');\r\nRoute::post('cierre/obs', 'CierreController@setObs');\r\nRoute::get('cierre', 'CierreController@index');\r\nRoute::get('cierre/{period}', 'CierreController@show');\r\nRoute::post('cierre/modificaciones', 'CierreController@modificaciones');\r\nRoute::post('cierre', 'CierreController@store');\r\n\r\n\r\nRoute::get('arqueo/{cierre_id}', 'ArqueoController@index');\r\nRoute::post('arqueo', 'ArqueoController@store');\r\n\r\n\r\nRoute::get('cheque/{cierre_id}', 'ChequeController@index');\r\nRoute::post('cheque', 'ChequeController@store');\r\nRoute::delete('cheque/{id}', 'ChequeController@delete');\r\n\r\nRoute::get('incidencia/{cierre_id}', 'IncidenciaController@index');\r\nRoute::post('incidencia/delete', 'IncidenciaController@remove');\r\nRoute::post('incidencia', 'IncidenciaController@store');\r\n\r\nRoute::get('control/aforadores/{cierre_id}', 'ControlAforadoresController@index');\r\nRoute::get('control/articulos/{cierre_id}', 'ControlArticulosController@index');\r\nRoute::get('facturado/cajas/{cierre_id}', 'FacturadoController@getCajasPorFecha');\r\nRoute::get('facturado/{cierre_id}', 'FacturadoController@getFacturados');\r\nRoute::get('facturado/yer/{cierre_id}', 'FacturadoController@getFacturadosYER');\r\n\r\nRoute::post('control/articulos', 'ControlArticulosController@store');\r\nRoute::post('control/aforadores', 'ControlAforadoresController@store');\r\n\r\n/* Guardo lo del cio en una tabla mysql*/\r\nRoute::get('cierrescio/cierre/{period}', 'CierreCioController@getCierreCio');\r\nRoute::get('cierrescio/yer/{period}', 'CierreCioController@getYERCio');\r\nRoute::post('cierrescio/cierre', 'CierreCioController@saveCierreCio');\r\nRoute::post('cierrescio/yer', 'CierreCioController@saveYERCio');\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- routes/api.php	(revision a45386754735e8996cad310318edb65609c80f65)
++++ routes/api.php	(date 1596637403534)
+@@ -19,11 +19,11 @@
+ 
+ Route::group(['middleware' => ['jwt']], function () {
+ 	Route::delete('cierre/{period}', 'CierreController@remove');
+-	
++
+     Route::post('articulo/orden','ArticuloController@saveOrden');
+     Route::post('articulo', 'ArticuloController@store');
+     Route::delete('articulo/{id}','ArticuloController@delete');
+-	
++
+     Route::post('aforador/orden','AforadorController@saveOrden');
+     Route::post('aforador', 'AforadorController@store');
+     Route::delete('aforador/{id}','AforadorController@delete');
+@@ -57,6 +57,11 @@
+ Route::post('cheque', 'ChequeController@store');
+ Route::delete('cheque/{id}', 'ChequeController@delete');
+ 
++Route::get('promo/{cierre_id}', 'PromoController@index');
++Route::post('promo', 'PromoController@store');
++Route::delete('promo/{id}', 'PromoController@delete');
++
++
+ Route::get('incidencia/{cierre_id}', 'IncidenciaController@index');
+ Route::post('incidencia/delete', 'IncidenciaController@remove');
+ Route::post('incidencia', 'IncidenciaController@store');
+Index: app/Http/Controllers/PlayeroController.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?php\r\n\r\nnamespace App\\Http\\Controllers;\r\n\r\nuse App\\Playero;\r\nuse Illuminate\\Http\\Request;\r\n\r\nclass PlayeroController extends Controller\r\n{\r\n\tpublic function index() {\r\n\t\treturn Playero::all();\r\n\t}\r\n\r\n\tpublic function usuariosCaja() {\r\n\t\treturn [\r\n\t\t\t'manana',\r\n\t\t\t'tarde', \r\n\t\t\t'noche', \r\n\t\t\t// 'gmenghi', \r\n\t\t\t// 'rbarrera', \r\n\t         'lbrizuela', \r\n\t  //       'jderoberti', \r\n\t  //       'llisandron', \r\n\t  //       'mmaccari', \r\n\t        // 'enunez',\r\n\t        'galarcon'\r\n\t    ];\r\n\t}\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/Http/Controllers/PlayeroController.php	(revision a45386754735e8996cad310318edb65609c80f65)
++++ app/Http/Controllers/PlayeroController.php	(date 1596662109561)
+@@ -14,16 +14,16 @@
+ 	public function usuariosCaja() {
+ 		return [
+ 			'manana',
+-			'tarde', 
+-			'noche', 
+-			// 'gmenghi', 
+-			// 'rbarrera', 
+-	         'lbrizuela', 
+-	  //       'jderoberti', 
+-	  //       'llisandron', 
+-	  //       'mmaccari', 
++			'tarde',
++			'noche',
++			// 'gmenghi',
++			// 'rbarrera',
++	         //'lbrizuela',
++	  //       'jderoberti',
++	  //       'llisandron',
++	  //       'mmaccari',
+ 	        // 'enunez',
+-	        'galarcon'
++	       // 'galarcon'
+ 	    ];
+ 	}
+-}
+\ No newline at end of file
++}
